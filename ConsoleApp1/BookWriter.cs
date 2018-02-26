@@ -45,6 +45,14 @@ namespace Gif2xlsx
             WorksheetPart worksheetPart1 = workbookPart1.AddNewPart<WorksheetPart>("rId" + curRid);
 
             Worksheet worksheet1 = new Worksheet();
+            // Set zoom
+            SheetViews sheetViews = new SheetViews();
+            SheetView sheetView = new SheetView();
+            sheetView.ZoomScale = 25;
+            sheetView.WorkbookViewId = 0;
+            sheetViews.Append(sheetView);
+            worksheet1.Append(sheetViews);
+
             SheetData sheetData1 = new SheetData();
 
             List<int> paletteUsedInSheet = new List<int>();

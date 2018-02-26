@@ -15,9 +15,15 @@ namespace Gif2xlsx
         {
             BookWriter bw = new BookWriter("out.xlsx");
             Image img = Image.FromFile(@"..\..\giphy.gif");
-            img.SelectActiveFrame(FrameDimension.Time, 0);
-            Bitmap single = new Bitmap(img);
-            bw.AddSheet("Frame1", single);
+
+            FrameDimension dimension = new FrameDimension(img.FrameDimensionsList[0]);
+            for (int i = 0; i < img.GetFrameCount(dimension); i++)
+            {
+                img.SelectActiveFrame(FrameDimension.Time, i);
+                Bitmap single = new Bitmap(img);
+                bw.AddSheet("Frame" + i.ToString(), single);
+            }
+
             bw.Save();
         }
     }

@@ -20,6 +20,8 @@ namespace Gif2xlsx
         WorkbookPart workbookPart1;
         Sheets sheets1;
         UInt32Value curRid = 1;
+        int nextFreePal;
+        Dictionary<System.Drawing.Color, int> palette;
 
         public BookWriter(string filePath)
         {
@@ -31,20 +33,8 @@ namespace Gif2xlsx
             sheets1 = new Sheets();
             workbook1.Append(sheets1);
 
-            var stylesPart = sd.WorkbookPart.AddNewPart<WorkbookStylesPart>();
-            stylesPart.Stylesheet = new Stylesheet();
-            DifferentialFormats dxfs = new DifferentialFormats();
-            DifferentialFormat dxf = new DifferentialFormat();
-            Fill f = new Fill();
-            PatternFill p = new PatternFill();
-            BackgroundColor b = new BackgroundColor();
-            b.Rgb = "FFFFFF00";
-            p.Append(b);
-            f.Append(p);
-            dxf.Append(f);
-            dxfs.Append(dxf);
-
-            stylesPart.Stylesheet.DifferentialFormats = dxfs;
+            nextFreePal = 0;
+            palette = new Dictionary<System.Drawing.Color, int>();
         }
 
         internal void AddSheet(string name, Bitmap img)
@@ -57,18 +47,19 @@ namespace Gif2xlsx
             Worksheet worksheet1 = new Worksheet();
             SheetData sheetData1 = new SheetData();
 
-            int nextFreePal = 0;
-            Dictionary<System.Drawing.Color, int> palette = new Dictionary<System.Drawing.Color, int>();
-            for (int y = 0; y < img.Height/10; y++)
+            List<int> paletteUsedInSheet = new List<int>();
+            int runWidth = 100;
+            int runHeight = 150;
+            for (int y = 0; y < runHeight; y++)
             {
                 Row row1 = new Row();
-                List<float> brights = new List<float>();
-                for (int x = 0; x < img.Width/10; x++)
+                for (int x = 0; x < runWidth; x++)
                 {
-                    System.Drawing.Color pix = img.GetPixel(x, y);
+                    System.Drawing.Color pix = img.GetPixel((int)((double)x/runWidth * img.Width), (int)((double)y /runHeight * img.Height));
                     if (!palette.ContainsKey(pix))
                         palette[pix] = (nextFreePal++);
-                    brights.Add(palette[pix]);
+                    if (!paletteUsedInSheet.Contains(palette[pix]))
+                        paletteUsedInSheet.Add(palette[pix]);
                     Cell cell1 = new Cell();
                     cell1.CellReference = xyToRef(x + 1, y + 1);
                     cell1.DataType = CellValues.Number;
@@ -79,17 +70,20 @@ namespace Gif2xlsx
             }
 
             worksheet1.Append(sheetData1);
-            // Add the CF stuff
-            ConditionalFormatting cf = new ConditionalFormatting();
-            cf.SetAttribute(new OpenXmlAttribute("sqref", "", "A1:C4"));
-            ConditionalFormattingRule cfr = new ConditionalFormattingRule();
-            cfr.Type = ConditionalFormatValues.Expression;
-            cfr.SetAttribute(new OpenXmlAttribute("dxfId", "", "1"));
-            cfr.Priority = 1;
-            Formula f = new Formula("A1=3");
-            cfr.Append(f);
-            cf.Append(cfr);
-            worksheet1.Append(cf);
+            // Add the CF stuff to that sheet (overall palette comes later)
+            foreach (var pal in paletteUsedInSheet)
+            {
+                ConditionalFormatting cf = new ConditionalFormatting();
+                cf.SetAttribute(new OpenXmlAttribute("sqref", "", "A1:" + GetColumnName(runWidth) + runHeight.ToString()));
+                ConditionalFormattingRule cfr = new ConditionalFormattingRule();
+                cfr.Type = ConditionalFormatValues.Expression;
+                cfr.SetAttribute(new OpenXmlAttribute("dxfId", "", pal.ToString()));
+                cfr.Priority = 1;
+                Formula f = new Formula("A1=" + pal.ToString());
+                cfr.Append(f);
+                cf.Append(cfr);
+                worksheet1.Append(cf);
+            }
             worksheetPart1.Worksheet = worksheet1;
 
             curRid++;
@@ -124,6 +118,23 @@ namespace Gif2xlsx
 
         internal void Save()
         {
+            var stylesPart = sd.WorkbookPart.AddNewPart<WorkbookStylesPart>();
+            stylesPart.Stylesheet = new Stylesheet();
+            DifferentialFormats dxfs = new DifferentialFormats();
+            foreach (var pal in palette)
+            {
+                DifferentialFormat dxf = new DifferentialFormat();
+                Fill f = new Fill();
+                PatternFill p = new PatternFill();
+                BackgroundColor b = new BackgroundColor();
+                b.Rgb = "FF" + ColorTranslator.ToHtml(pal.Key).Replace("#","");
+                p.Append(b);
+                f.Append(p);
+                dxf.Append(f);
+                dxfs.Append(dxf);
+            }
+
+            stylesPart.Stylesheet.DifferentialFormats = dxfs;
             sd.Save();
             sd.Close();
         }

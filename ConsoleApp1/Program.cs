@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -39,10 +40,9 @@ namespace Gif2xlsx
                 }
 
                 Console.WriteLine("Saving spreadsheet...");
-                Console.WriteLine("Done. To open spreadsheet, you can type:");
-                Console.WriteLine();
-                Console.WriteLine("start out.xlsx");
                 bw.Save();
+                Console.WriteLine("Done. Opening spreadsheet...");
+                Process.Start("out.xlsx");
             }
         }
     }

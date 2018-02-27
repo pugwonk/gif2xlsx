@@ -48,7 +48,7 @@ namespace Gif2xlsx
             // Set zoom
             SheetViews sheetViews = new SheetViews();
             SheetView sheetView = new SheetView();
-            sheetView.ZoomScale = 25;
+            sheetView.ZoomScale = 13;
             sheetView.WorkbookViewId = 0;
             sheetViews.Append(sheetView);
             worksheet1.Append(sheetViews);
@@ -56,8 +56,10 @@ namespace Gif2xlsx
             SheetData sheetData1 = new SheetData();
 
             List<int> paletteUsedInSheet = new List<int>();
-            int runWidth = 100;
-            int runHeight = 150;
+            int runWidth = 150;
+            int runHeight = 200;
+            //runWidth = 10;
+            //runHeight = 15;
             for (int y = 0; y < runHeight; y++)
             {
                 Row row1 = new Row();
@@ -70,28 +72,19 @@ namespace Gif2xlsx
                         paletteUsedInSheet.Add(palette[pix]);
                     Cell cell1 = new Cell();
                     cell1.CellReference = xyToRef(x + 1, y + 1);
-                    cell1.DataType = CellValues.Number;
-                    cell1.CellValue = new CellValue(XmlConvert.ToString(palette[pix]));
+                    cell1.DataType = CellValues.InlineString;
+                    InlineString ils = new InlineString();
+                    Text cval = new Text { Text = ColorTranslator.ToHtml(pix).Replace("#", "") };
+                    //Text cval = new Text { Text = palette[pix].ToString() };
+                    ils.AppendChild(cval);
+                    //cell1.AppendChild(ils);
+                    cell1.StyleIndex = (UInt32)(2+palette[pix]);
                     row1.Append(cell1);
                 }
                 sheetData1.Append(row1);
             }
 
             worksheet1.Append(sheetData1);
-            // Add the CF stuff to that sheet (overall palette comes later)
-            foreach (var pal in paletteUsedInSheet)
-            {
-                ConditionalFormatting cf = new ConditionalFormatting();
-                cf.SetAttribute(new OpenXmlAttribute("sqref", "", "A1:" + GetColumnName(runWidth) + runHeight.ToString()));
-                ConditionalFormattingRule cfr = new ConditionalFormattingRule();
-                cfr.Type = ConditionalFormatValues.Expression;
-                cfr.SetAttribute(new OpenXmlAttribute("dxfId", "", pal.ToString()));
-                cfr.Priority = 1;
-                Formula f = new Formula("A1=" + pal.ToString());
-                cfr.Append(f);
-                cf.Append(cfr);
-                worksheet1.Append(cf);
-            }
             worksheetPart1.Worksheet = worksheet1;
 
             curRid++;
@@ -128,21 +121,57 @@ namespace Gif2xlsx
         {
             var stylesPart = sd.WorkbookPart.AddNewPart<WorkbookStylesPart>();
             stylesPart.Stylesheet = new Stylesheet();
-            DifferentialFormats dxfs = new DifferentialFormats();
+            CellFormats cellFormats = new CellFormats();
+
+            Fills fills = new Fills();
+            // There are two fills that seemingly need to be always in there
+            Fill fill1 = new Fill();
+            PatternFill patternFill1 = new PatternFill();
+            patternFill1.PatternType = PatternValues.None;
+            fill1.Append(patternFill1);
+            fills.Append(fill1);
+            Fill fill2 = new Fill();
+            PatternFill patternFill2 = new PatternFill();
+            patternFill2.PatternType = PatternValues.Gray125;
+            fill2.Append(patternFill2);
+            fills.Append(fill2);
+            // And two XFs
+            CellFormat cellFormat1 = new CellFormat();
+            cellFormat1.FillId = (UInt32)0;
+            cellFormats.Append(cellFormat1);
+            CellFormat cellFormat2 = new CellFormat();
+            cellFormat2.FillId = (UInt32)1;
+            cellFormats.Append(cellFormat2);
+
             foreach (var pal in palette)
             {
-                DifferentialFormat dxf = new DifferentialFormat();
-                Fill f = new Fill();
-                PatternFill p = new PatternFill();
-                BackgroundColor b = new BackgroundColor();
-                b.Rgb = "FF" + ColorTranslator.ToHtml(pal.Key).Replace("#","");
-                p.Append(b);
-                f.Append(p);
-                dxf.Append(f);
-                dxfs.Append(dxf);
+                CellFormat cellFormat = new CellFormat();
+                cellFormat.FillId = (UInt32)(pal.Value + 2);
+                cellFormats.Append(cellFormat);
+
+                Fill fill = new Fill();
+                PatternFill patternFill = new PatternFill();
+                patternFill.PatternType = PatternValues.Solid;
+                ForegroundColor fgc = new ForegroundColor();
+                fgc.Rgb = "FF" + ColorTranslator.ToHtml(pal.Key).Replace("#", "");
+                patternFill.Append(fgc);
+                fill.Append(patternFill);
+                fills.Append(fill);
             }
 
-            stylesPart.Stylesheet.DifferentialFormats = dxfs;
+            // Add dummy borders and fonts, which we need for the cellXfs to work
+            Borders borders = new Borders();
+            Border border = new Border();
+            borders.Append(border);
+            Fonts fonts = new Fonts();
+            DocumentFormat.OpenXml.Spreadsheet.Font font = new DocumentFormat.OpenXml.Spreadsheet.Font();
+            fonts.Append(font);
+
+            // Add the other things we made to the stylesheet
+            stylesPart.Stylesheet.Append(fonts);
+            stylesPart.Stylesheet.Append(fills);
+            stylesPart.Stylesheet.Append(borders);
+            stylesPart.Stylesheet.Append(cellFormats);
             sd.Save();
             sd.Close();
         }

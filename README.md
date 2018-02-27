@@ -7,7 +7,7 @@ I worked for a long time in financial services, and I can tell you that one thin
 
 # Usage
 
-1. Download the current release binary
+1. Download [gif2xlsx.exe](https://github.com/pugwonk/gif2xlsx/releases)
 1. Download your favourite GIF to the same folder
 1. At a command line in the same folder, type: `gif2xlsx myfavourite.gif` (ot whatever you called it)
 

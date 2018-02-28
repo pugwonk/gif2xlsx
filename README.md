@@ -3,13 +3,13 @@ Convert GIFs to XLSX format
 
 I worked for a long time in financial services, and I can tell you that one thing I got sick of hearing was "how do I convert animated GIFs into Excel files". If you're here wondering why nobody has yet exploited this gap in a very lucrative market, wonder no longer. Help is at hand.
 
-![BluePrint build order](https://github.com/pugwonk/gif2xlsx/raw/master/readmepics/sample.png)
+![](https://github.com/pugwonk/gif2xlsx/raw/master/readmepics/sample.png)
 
 # Usage
 
 1. Download [gif2xlsx.exe](https://github.com/pugwonk/gif2xlsx/releases)
 1. Download your favourite GIF to the same folder
-1. At a command line in the same folder, type: `gif2xlsx myfavourite.gif` (ot whatever you called it)
+1. At a command line in the same folder, type: `gif2xlsx myfavourite.gif` (or whatever you called it)
 
 Animated GIFs are converted on a one-frame-per-worksheet basis, so you have to step through the worksheets to animate them. I was originally intending using conditional formatting and iterative calc to display these, but unfortunately the Excel team* seem to have single-threaded the calculation of conditional formatting and it was far too slow to render.
 

@@ -3,7 +3,7 @@ Convert GIFs to XLSX format
 
 I worked for a long time in financial services, and I can tell you that one thing I got sick of hearing was "how do I convert animated GIFs into Excel files". If you're here wondering why nobody has yet exploited this gap in a very lucrative market, wonder no longer. Help is at hand.
 
-![](https://github.com/pugwonk/gif2xlsx/raw/master/readmepics/sample.png)
+![](https://github.com/pugwonk/gif2xlsx/raw/master/readmepics/sample.gif)
 
 # Usage
 
